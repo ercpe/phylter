@@ -71,6 +71,14 @@ class TestConsumableIter(object):
 		with pytest.raises(ValueError):
 			ci.consume(1)
 
+	def test_slice(self):
+		ci = ConsumableIter([1, 2, 3])
+		part = ci[1:2]
+		assert isinstance(part, ConsumableIter)
+		assert part.iterable == [2]
+		assert part.length == 1
+		assert part.remaining == 1
+		assert part.pos == 0
 
 class TestParser(object):
 

@@ -57,6 +57,9 @@ class ConsumableIter(object):
 		self.pos += length
 		return elements
 
+	def __getitem__(self, item):
+		return ConsumableIter(self.iterable.__getitem__(item))
+
 
 class Parser(object):
 
@@ -69,6 +72,9 @@ class Parser(object):
 		while chunks.has_more:
 			left, operator, right = tuple(chunks.consume(3))
 			return [self._get_condition_class(operator)(left, right)]
+
+	def build_query(self, consumable):
+		pass
 
 	def _get_condition_class(self, operator):
 		d = {
