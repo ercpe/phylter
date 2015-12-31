@@ -57,6 +57,9 @@ class ConsumableIter(object):
 		self.pos += length
 		return elements
 
+	def __contains__(self, item):
+		return item in self.iterable[self.pos:]
+
 	def __getitem__(self, item):
 		return ConsumableIter(self.iterable.__getitem__(item))
 

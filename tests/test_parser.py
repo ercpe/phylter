@@ -80,6 +80,15 @@ class TestConsumableIter(object):
 		assert part.remaining == 1
 		assert part.pos == 0
 
+	def test_contains(self):
+		ci = ConsumableIter([1, 2, 3, 4, 5])
+		assert 1 in ci
+		assert 5 in ci
+
+		ci.consume()
+		assert 1 not in ci # already consumed
+		assert 5 in ci
+
 class TestParser(object):
 
 	def test_constructor(self):
