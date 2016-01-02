@@ -6,6 +6,8 @@ class Condition(object):
 		self.left = left
 		self.right = right
 
+	def __eq__(self, other):
+		return isinstance(other, self.__class__) and other.left == self.left and other.right == self.right
 
 class EqualsCondition(Condition):
 
@@ -37,15 +39,23 @@ class LessThanOrEqualCondition(Condition):
 		return "%s <= %s" % (self.left, self.right)
 
 
-class Operator(object):
+class Operator(object):  # pragma: nocover
 	def __init__(self, left, right):
 		self.left = left
 		self.right = right
 
+	def __eq__(self, other):
+		return isinstance(other, self.__class__) and other.left == self.left and other.right == self.right
+
 
 class AndOperator(Operator):
-	pass
+
+	def __str__(self):  # pragma: nocover
+		return "(%s) AND (%s)" % (self.left, self.right)
+
 
 class OrOperator(Operator):
-	pass
+
+	def __str__(self):  # pragma: nocover
+		return "(%s) OR (%s)" % (self.left, self.right)
 

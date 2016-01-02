@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
+from pyparsing import ParseException
 
 from phylter.conditions import EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, \
-	LessThanOrEqualCondition
+	LessThanOrEqualCondition, AndOperator, OrOperator
 from phylter.parser import ConsumableIter, Parser
+from phylter.query import Query
 
 
 class TestConsumableIter(object):
@@ -89,6 +91,16 @@ class TestConsumableIter(object):
 		assert 1 not in ci # already consumed
 		assert 5 in ci
 
+	def test_len(self):
+		ci = ConsumableIter([1, 2, 3])
+		assert ci.length == 3
+		assert len(ci) == 3
+
+	def test_iter(self):
+		ci = ConsumableIter([1, 2, 3])
+
+		assert [x for x in ci] == [1, 2, 3]
+
 class TestParser(object):
 
 	def test_constructor(self):
@@ -110,6 +122,17 @@ class TestParser(object):
 				p._get_condition_class(x)
 				assert e
 
+	def test_get_operator_class(self):
+		p = Parser()
+
+		assert p._get_operator_class('and') == AndOperator
+		assert p._get_operator_class('or') == OrOperator
+
+		for x in (None, 'foobar'):
+			with pytest.raises(Exception) as e:
+				p._get_operator_class(x)
+				assert e
+
 	def test_parse(self):
 		for query, left, right, clazz in (
 			('foo == bar', 'foo', 'bar', EqualsCondition),
@@ -118,8 +141,61 @@ class TestParser(object):
 			('foo >= bar', 'foo', 'bar', GreaterThanOrEqualCondition),
 			('foo <= bar', 'foo', 'bar', LessThanOrEqualCondition),
 		):
-			q = Parser().parse(query)
-			assert len(q) == 1
-			assert isinstance(q[0], clazz)
-			assert q[0].left == left
-			assert q[0].right == right
+			q = Parser().parse(query).query
+			assert q == ConsumableIter([
+				clazz(left, right)
+			])
+
+	def test_parse_and_or(self):
+		for query, result in (
+			("a == 1 and b == 2 or c == 3", # a and (b or c)
+				AndOperator(
+					EqualsCondition('a', '1'),
+					OrOperator(
+						EqualsCondition('b', '2'),
+						EqualsCondition('c', '3'),
+					)
+				)
+			),
+			("a == 1 or b == 2 and c == 3",  # (a or b) and c
+				AndOperator(
+					OrOperator(
+						EqualsCondition('a', '1'),
+						EqualsCondition('b', '2')
+					),
+					EqualsCondition('c', '3')
+				)
+			),
+			("a == 1 or b == 2 or c == 3",
+				OrOperator(
+					OrOperator(
+						EqualsCondition('a', '1'),
+						EqualsCondition('b', '2')
+					),
+					EqualsCondition('c', '3')
+				)
+			),
+			("a == 1 and b == 2 and c == 3",
+				AndOperator(
+					AndOperator(
+						EqualsCondition('a', '1'),
+						EqualsCondition('b', '2')
+					),
+					EqualsCondition('c', '3')
+				)
+			),
+		):
+			q = Parser().parse(query).query
+			assert q == ConsumableIter([result])
+
+	def test_parse_fail(self):
+		for s in (
+			'foo == ',
+			'foo == 1 and ',
+			'foo == 1 or ',
+			'or',
+			'and',
+			'foo == bar and (foo < 1 or foo > 2)',
+		):
+			with pytest.raises(ParseException) as e:
+				Parser().parse(s)
