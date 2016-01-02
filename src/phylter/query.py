@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from phylter.backends import get_backend
+
 
 class Query(object):
 
@@ -10,3 +12,8 @@ class Query(object):
 
 	def __repr__(self):  # pragma: nocover
 		return "%s(%s)" % (self.__class__.__name__, self.__str__())
+
+	def apply(self, iterable):
+		backend = get_backend(iterable)
+
+		return backend.apply(self, iterable)
