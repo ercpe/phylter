@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 import sys
-from django.db.models import Q
-from django.db.models.manager import Manager
-from django.db.models.query import QuerySet
 
 from phylter.backends import backends, get_backend
 from phylter.backends.base import Backend, str_types
@@ -12,6 +9,15 @@ from phylter.backends.objects import ObjectsBackend
 from phylter.conditions import EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, \
 	LessThanOrEqualCondition, AndOperator, OrOperator
 from phylter.query import Query
+
+have_django = False
+try:
+	from django.db.models import Q
+	from django.db.models.manager import Manager
+	from django.db.models.query import QuerySet
+	have_django = True
+except ImportError:
+	have_django = False
 
 
 class TestBackends(object):
@@ -101,6 +107,7 @@ class TestObjectBackend(object):
 		assert list(query.apply([Foo()])) == [Foo()]
 
 
+@pytest.mark.skipif(not have_django, reason='Disable without django')
 class TestDjangoBackend(object):
 
 	def test_supports(self):
