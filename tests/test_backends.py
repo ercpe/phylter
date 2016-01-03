@@ -19,6 +19,10 @@ try:
 except ImportError:
 	have_django = False
 
+if sys.version_info.major == 2 or (sys.version_info.major == 3 and sys.version_info.minor <= 2):
+	from mock import Mock
+else:
+	from unittest.mock import Mock
 
 class TestBackends(object):
 
@@ -148,3 +152,27 @@ class TestDjangoBackend(object):
 		assert q.children[0].children == [('a', 1)]
 		assert q.children[1].children == [('a__gt', 0)]
 		assert q.connector == 'OR'
+
+		with pytest.raises(Exception):
+			db.to_q(False)
+
+	def test_apply_django_filter(self):
+		qs = Mock()
+
+		db = DjangoBackend()
+		db.apply_django_filter(qs, EqualsCondition('a', 1))
+
+		assert qs.filter.called
+
+	def test_apply(self):
+		all_qs = Mock()
+
+		manager = Mock()
+		manager.all = Mock(return_value=all_qs)
+
+		db = DjangoBackend()
+		db.apply(Query([EqualsCondition('a', 1)]), manager)
+
+		assert manager.all.called # Mock() isn't an instance of Manager, so .all() must be called
+		assert all_qs.filter.called
+
