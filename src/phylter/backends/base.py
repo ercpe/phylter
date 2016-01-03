@@ -23,20 +23,22 @@ class Backend(object):
 		raise NotImplementedError
 
 	def get_compatible_value(self, value, field_type=None):
-		if field_type in str_types or (field_type is None and isinstance(value, str_types)):
+		value_type = type(value)
+
+		if field_type in str_types or (field_type is None and value_type in str_types):
 			s = value if isinstance(value, str_types) else str(value)
 
-			if value[0] in ("'", '"') and value[0] == value[-1]:
+			if s[0] in ("'", '"') and s[0] == s[-1]:
 				# quoted string
-				return value[1:-1]
+				return s[1:-1]
 
 			return value
 
-		if field_type in (int, float) or (field_type is None and isinstance(value, (int, float))):
-			if isinstance(value, (int, float)):
+		if field_type in (int, float) or (field_type is None and value_type in (int, float)):
+			if value_type in (int, float):
 				return value
 
-			if isinstance(value, str_types) and digit_or_float(value):
+			if value_type in str_types and digit_or_float(value):
 				return float(value)
 
 			return value

@@ -52,7 +52,9 @@ class TestBackends(object):
 		# str
 		assert ob.get_compatible_value('"test"') == "test"
 		assert ob.get_compatible_value("test") == "test"
+		assert ob.get_compatible_value(False, str) == False
 
+		# numbers
 		assert ob.get_compatible_value(10) == 10
 		assert ob.get_compatible_value("10", int) == 10
 		assert ob.get_compatible_value("10.0", int) == 10
@@ -60,7 +62,9 @@ class TestBackends(object):
 		assert ob.get_compatible_value("-10", int) == -10
 		assert ob.get_compatible_value("-10.0", int) == -10
 		assert ob.get_compatible_value("-10.0", float) == -10
+		assert ob.get_compatible_value(False, int) == False
 
+		# other
 		assert ob.get_compatible_value(True) == True
 
 
