@@ -18,7 +18,7 @@ env:
 install:
 - pip install -r requirements.txt
 - pip install -r requirements_dev.txt
-- [[ "${DJANGO}" ]] && pip install "$DJANGO"
+- if [[ "${DJANGO}" ]]; then pip install "$DJANGO"; fi
 
 matrix:
   exclude:
