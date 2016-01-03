@@ -13,20 +13,24 @@ else:
 	str_types = (str, bytes)
 
 
-class Backend(object):  # pragma: nocover
+class Backend(object):
 
 	@staticmethod
-	def supports(o):
+	def supports(o):  # pragma: nocover
 		raise NotImplementedError
 
-	def apply(self, query, iterable):
+	def apply(self, query, iterable):  # pragma: nocover
 		raise NotImplementedError
 
 	def get_compatible_value(self, value, field_type=None):
 		if field_type in str_types or (field_type is None and isinstance(value, str_types)):
+			s = value if isinstance(value, str_types) else str(value)
+
 			if value[0] in ("'", '"') and value[0] == value[-1]:
 				# quoted string
 				return value[1:-1]
+
+			return value
 
 		if field_type in (int, float) or (field_type is None and isinstance(value, (int, float))):
 			if isinstance(value, (int, float)):
