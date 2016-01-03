@@ -4,10 +4,6 @@ from phylter.backends.base import Backend
 from phylter.conditions import Condition, OrOperator, AndOperator, EqualsCondition, \
 	GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition, GreaterThanCondition
 
-number_re = re.compile("^-?\d+(\.\d+)?$")
-
-def digit_or_float(s):
-	return s.isdigit() or number_re.match(s) is not None
 
 class ObjectsBackend(Backend):
 
@@ -25,8 +21,8 @@ class ObjectsBackend(Backend):
 
 	def eval_op(self, op, item):
 		if isinstance(op, Condition):
-			left_value = self.get_item_value(item, op.left)
-			right_value = self.get_item_value(item, op.right)
+			left_value = getattr(item, op.left)
+			right_value = self.get_compatible_value(op.right, type(left_value))
 
 			return {
 				EqualsCondition: lambda a, b: a == b,
@@ -43,13 +39,3 @@ class ObjectsBackend(Backend):
 			return self.eval_op(op.left, item) or self.eval_op(op.right, item)
 
 		raise Exception("Unexpected item found in query: %s" % op)
-
-	def get_item_value(self, item, name_or_value):
-		if isinstance(name_or_value, (int, float)) or digit_or_float(name_or_value):
-			return float(name_or_value)
-
-		if name_or_value[0] in ("'", '"') and name_or_value[0] == name_or_value[-1]:
-			# quoted string
-			return name_or_value[1:-1]
-
-		return getattr(item, name_or_value)
