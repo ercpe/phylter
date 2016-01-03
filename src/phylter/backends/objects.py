@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 from phylter.backends.base import Backend
-from phylter.conditions import Condition, Operator, OrOperator, AndOperator, EqualsCondition, \
+from phylter.conditions import Condition, OrOperator, AndOperator, EqualsCondition, \
 	GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition, GreaterThanCondition
 
 number_re = re.compile("^-?\d+(\.\d+)?$")
