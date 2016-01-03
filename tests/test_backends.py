@@ -4,7 +4,6 @@ import sys
 
 from phylter.backends import backends, get_backend
 from phylter.backends.base import Backend, str_types
-from phylter.backends.django_backend import DjangoBackend
 from phylter.backends.objects import ObjectsBackend
 from phylter.conditions import EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, \
 	LessThanOrEqualCondition, AndOperator, OrOperator
@@ -15,6 +14,7 @@ try:
 	from django.db.models import Q
 	from django.db.models.manager import Manager
 	from django.db.models.query import QuerySet
+	from phylter.backends.django_backend import DjangoBackend
 	have_django = True
 except ImportError:
 	have_django = False
@@ -24,7 +24,12 @@ class TestBackends(object):
 
 	def test_objectbackend_exists(self):
 		assert ObjectsBackend in backends
-		assert DjangoBackend in backends
+
+		if have_django:
+			assert DjangoBackend in backends
+			assert len(backends) == 2
+		else:
+			assert len(backends) == 1
 
 	def test_get_backend(self):
 		class Foo(object):
