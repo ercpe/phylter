@@ -23,7 +23,13 @@ class Backend(object):
 		raise NotImplementedError
 
 	def get_compatible_value(self, value, field_type=None):
+		if value is None:
+			return None
+
 		value_type = type(value)
+
+		if field_type and value_type == field_type:
+			return value
 
 		if field_type in str_types or (field_type is None and value_type in str_types):
 			s = value if isinstance(value, str_types) else str(value)

@@ -53,6 +53,11 @@ class TestBackends(object):
 	def test_get_compatible_value(self):
 		ob = Backend()
 
+		assert ob.get_compatible_value(None) is None
+
+		# value is already of type
+		assert ob.get_compatible_value("test", str) == "test"
+
 		# str
 		assert ob.get_compatible_value('"test"') == "test"
 		assert ob.get_compatible_value("test") == "test"
@@ -67,6 +72,7 @@ class TestBackends(object):
 		assert ob.get_compatible_value("-10.0", int) == -10
 		assert ob.get_compatible_value("-10.0", float) == -10
 		assert ob.get_compatible_value(False, int) == False
+		assert ob.get_compatible_value("test", int) == "test"
 
 		# other
 		assert ob.get_compatible_value(True) == True
