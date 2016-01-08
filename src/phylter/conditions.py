@@ -9,6 +9,9 @@ class Condition(object):
 	def __eq__(self, other):
 		return isinstance(other, self.__class__) and other.left == self.left and other.right == self.right
 
+	def __repr__(self):
+		return self.__str__()
+
 class EqualsCondition(Condition):
 
 	def __str__(self):  # pragma: nocover
@@ -59,3 +62,17 @@ class OrOperator(Operator):
 	def __str__(self):  # pragma: nocover
 		return "(%s) OR (%s)" % (self.left, self.right)
 
+
+class ConditionGroup(object):
+
+	def __init__(self, item):
+		self.item = item
+
+	def __str__(self):
+		return "(%s)" % self.item
+
+	def __repr__(self):
+		return self.__str__()
+
+	def __eq__(self, other):
+		return isinstance(other, ConditionGroup) and self.item == other.item

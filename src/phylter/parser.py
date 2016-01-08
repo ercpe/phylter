@@ -2,20 +2,26 @@
 import pyparsing
 
 from phylter.conditions import EqualsCondition, GreaterThanCondition, LessThanCondition, GreaterThanOrEqualCondition, \
-	LessThanOrEqualCondition, AndOperator, OrOperator, Condition, Operator
+	LessThanOrEqualCondition, AndOperator, OrOperator, Condition, Operator, ConditionGroup
 from phylter.query import Query
 
-field = pyparsing.Word(pyparsing.alphanums)
-operator = pyparsing.oneOf(('==', '!=', '>', '<', '>=', '<='))
+operator_signs = ('==', '!=', '>', '<', '>=', '<=')
+
+identifier = pyparsing.Word(pyparsing.alphanums)
+operator = pyparsing.oneOf(operator_signs)
 value = pyparsing.quotedString | pyparsing.Word(pyparsing.alphanums)
 
+# covers foo == bar and (foo == bar)
+condition = identifier + operator + value | \
+			"(" + identifier + operator + value + ")"
+
 and_or = pyparsing.oneOf(['and', 'or'], caseless=True)
+andor_field_op_value = and_or + condition
 
-field_op_value = field + operator + value
+grouped_andor_field_op_value = and_or + "(" + condition + pyparsing.Optional(pyparsing.OneOrMore(andor_field_op_value)) + ")"
 
-andor_field_op_value = and_or + field_op_value
-
-pattern = field_op_value + pyparsing.Optional(pyparsing.OneOrMore(andor_field_op_value))
+pattern = condition + \
+		  pyparsing.Optional(pyparsing.OneOrMore(andor_field_op_value | grouped_andor_field_op_value))
 
 
 class ConsumableIter(object):
@@ -34,10 +40,16 @@ class ConsumableIter(object):
 
 	@property
 	def current(self):
-		if self.pos >= self.length-1:
+		if self.pos > self.length-1:
 			return None
 
 		return self.iterable[self.pos]
+
+	@property
+	def next(self):
+		if self.pos >= self.length-1:
+			return None
+		return self.iterable[self.pos+1]
 
 	def consume(self, length=1):
 		if length is None or length < 0 or length > self.length:
@@ -83,19 +95,55 @@ class Parser(object):
 		chunks = ConsumableIter(pattern.parseString(query, parseAll=True))
 		return self.build_query(chunks)
 
+	def find_group_end(self, consumable):
+		openings = 1
+
+		for i, item in enumerate(consumable):
+			if item == ')':
+				if openings <= 1:
+					return i
+				else:
+					i -= 1
+			elif item == '(':
+				i += 1
+
+		if openings > 1:
+			raise Exception("Unbalanced parenthesis")
+
 	def build_query(self, consumable):
+		l = []
+
+		# parse groups first
+		while consumable.has_more:
+			if consumable.current == '(':
+				consumable.consume()  # consume (
+				end = self.find_group_end(consumable[consumable.pos:])
+				sub = consumable[consumable.pos:consumable.pos+end] # extract group content
+				consumable.consume(end+1) # consume the whole group
+				sub_query = self.build_query(sub) # parse the group
+				if len(sub_query.query) != 1:
+					raise Exception()
+				l.append(ConditionGroup(sub_query.query.iterable[0]))
+			else:
+				l.append(consumable.consume())
+
+		consumable = ConsumableIter(l)
 		l = []
 
 		# replace condition tuples with *Condition instances
 		while consumable.has_more:
-			left, operator, right = tuple(consumable.consume(3))
-			condition = self._get_condition_class(operator)(left, right)
-			l.append(condition)
-
-			if consumable.has_more:
+			if consumable.current in ('and', 'or') or isinstance(consumable.current, ConditionGroup):
 				l.append(consumable.consume())
+			else:
+				if consumable.next in operator_signs:
+					left, operator, right = tuple(consumable.consume(3))
+					condition = self._get_condition_class(operator)(left, right)
+					l.append(condition)
+				else:
+					print(consumable.current)
+					raise Exception("Unexpected tokens found: %s" % consumable.iterable[consumable.pos:])
 
-		assert all((isinstance(x, Condition) or x in ('and', 'or') for x in l))
+		assert all((isinstance(x, (Condition, ConditionGroup)) or x in ('and', 'or') for x in l))
 
 		l = ConsumableIter(l)
 		# replace all operator with *Operator instances, from the lowest to the highest binding

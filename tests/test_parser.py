@@ -3,8 +3,8 @@ import pytest
 from pyparsing import ParseException
 
 from phylter.conditions import EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, \
-	LessThanOrEqualCondition, AndOperator, OrOperator
-from phylter.parser import ConsumableIter, Parser
+	LessThanOrEqualCondition, AndOperator, OrOperator, ConditionGroup
+from phylter.parser import ConsumableIter, Parser, pattern
 from phylter.query import Query
 
 
@@ -145,6 +145,45 @@ class TestParser(object):
 			assert q == ConsumableIter([
 				clazz(left, right)
 			])
+			print("------")
+
+	def test_parse_groups(self):
+		s = "foo == 'bar' or (foo == 'baz' or foo=='bat')"
+		q = Parser().parse(s)
+		assert q.query.iterable == [
+			OrOperator(
+				EqualsCondition('foo', "'bar'"),
+				ConditionGroup(
+					OrOperator(
+							EqualsCondition('foo', "'baz'"),
+							EqualsCondition('foo', "'bat'")
+					)
+				)
+			)
+		]
+
+		# multiple group
+		s = "foo == 'bar' or (foo == 'baz' or foo=='bat') or (a == 1 and b < 2)"
+		q = Parser().parse(s)
+		assert q.query.iterable == [
+			OrOperator(
+				OrOperator(
+					EqualsCondition('foo', "'bar'"),
+					ConditionGroup(
+						OrOperator(
+								EqualsCondition('foo', "'baz'"),
+								EqualsCondition('foo', "'bat'")
+						)
+					)
+				),
+				ConditionGroup(
+					AndOperator(
+						EqualsCondition('a', '1'),
+						LessThanCondition('b', '2'),
+					)
+				)
+			)
+		]
 
 	def test_parse_and_or(self):
 		for query, result in (
@@ -195,7 +234,7 @@ class TestParser(object):
 			'foo == 1 or ',
 			'or',
 			'and',
-			'foo == bar and (foo < 1 or foo > 2)',
+#			'foo == bar and (foo < 1 or foo > 2)',
 		):
 			with pytest.raises(ParseException) as e:
 				Parser().parse(s)
