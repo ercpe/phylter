@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import re
 from phylter.backends.base import Backend
 from phylter.conditions import Condition, OrOperator, AndOperator, EqualsCondition, \
-	GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition, GreaterThanCondition
+	GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition, GreaterThanCondition, ConditionGroup, \
+	Operator
 
 
 class ObjectsBackend(Backend):
@@ -32,10 +32,14 @@ class ObjectsBackend(Backend):
 				LessThanOrEqualCondition: lambda a, b: a <= b,
 			}[op.__class__](left_value, right_value)
 
-		if isinstance(op, AndOperator):
-			return self.eval_op(op.left, item) and self.eval_op(op.right, item)
+		if isinstance(op, ConditionGroup):
+			return self.eval_op(op.item, item)
 
-		if isinstance(op, OrOperator):
-			return self.eval_op(op.left, item) or self.eval_op(op.right, item)
+		if isinstance(op, Operator):
+			if isinstance(op, AndOperator):
+				return self.eval_op(op.left, item) and self.eval_op(op.right, item)
+
+			if isinstance(op, OrOperator):
+				return self.eval_op(op.left, item) or self.eval_op(op.right, item)
 
 		raise Exception("Unexpected item found in query: %s" % op)

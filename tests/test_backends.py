@@ -6,7 +6,7 @@ from phylter.backends import backends, get_backend
 from phylter.backends.base import Backend, str_types
 from phylter.backends.objects import ObjectsBackend
 from phylter.conditions import EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, \
-	LessThanOrEqualCondition, AndOperator, OrOperator
+	LessThanOrEqualCondition, AndOperator, OrOperator, ConditionGroup
 from phylter.query import Query
 
 have_django = False
@@ -99,6 +99,17 @@ class TestObjectBackend(object):
 		assert ob.eval_op(GreaterThanOrEqualCondition('a', 1), Foo())
 		assert ob.eval_op(LessThanCondition('a', 2), Foo())
 		assert ob.eval_op(LessThanOrEqualCondition('a', 1), Foo())
+
+	def test_eval_op_groups(self):
+		ob = ObjectsBackend()
+
+		class Foo(object):
+			a = 1
+			b = 2
+
+		assert ob.eval_op(ConditionGroup(
+			OrOperator(EqualsCondition('a', 1), EqualsCondition('b', 2))
+		), Foo())
 
 	def test_eval_op_operator(self):
 		ob = ObjectsBackend()

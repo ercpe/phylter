@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 
 from phylter.backends.base import Backend
 from phylter.conditions import Condition, EqualsCondition, GreaterThanCondition, GreaterThanOrEqualCondition, \
-	LessThanCondition, LessThanOrEqualCondition, AndOperator, OrOperator
+	LessThanCondition, LessThanOrEqualCondition, AndOperator, OrOperator, ConditionGroup, Operator
 
 
 class DjangoBackend(Backend):
@@ -38,10 +38,14 @@ class DjangoBackend(Backend):
 			f = "%s%s" % (obj.left, suffix)
 			return Q(**{f: self.get_compatible_value(obj.right)})
 
-		if isinstance(obj, AndOperator):
-			return Q(self.to_q(obj.left), self.to_q(obj.right))
+		if isinstance(obj, ConditionGroup):
+			return Q(self.to_q(obj.item))
 
-		if isinstance(obj, OrOperator):
-			return Q(self.to_q(obj.left)) | Q(self.to_q(obj.right))
+		if isinstance(obj, Operator):
+			if isinstance(obj, AndOperator):
+				return Q(self.to_q(obj.left), self.to_q(obj.right))
+
+			if isinstance(obj, OrOperator):
+				return Q(self.to_q(obj.left)) | Q(self.to_q(obj.right))
 
 		raise Exception("Unexpected item found in query: %s" % obj)
