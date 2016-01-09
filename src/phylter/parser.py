@@ -107,8 +107,7 @@ class Parser(object):
 			elif item == '(':
 				i += 1
 
-		if openings > 1:
-			raise Exception("Unbalanced parenthesis")
+		raise Exception("Unbalanced parenthesis")
 
 	def build_query(self, consumable):
 		l = []
@@ -140,7 +139,6 @@ class Parser(object):
 					condition = self._get_condition_class(operator)(left, right)
 					l.append(condition)
 				else:
-					print(consumable.current)
 					raise Exception("Unexpected tokens found: %s" % consumable.iterable[consumable.pos:])
 
 		assert all((isinstance(x, (Condition, ConditionGroup)) or x in ('and', 'or') for x in l))

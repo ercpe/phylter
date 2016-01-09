@@ -20,13 +20,21 @@ class TestConsumableIter(object):
 		assert ci.length == 3
 		assert ci.remaining == 3
 
-	def test_current(self):
+	def test_current_and_next(self):
 		ci = ConsumableIter([1, 2, 3])
 		assert ci.current == 1
+		assert ci.next == 2
 
-	def test_current_empty(self):
+	def test_current_and_next_empty(self):
 		ci = ConsumableIter([])
 		assert ci.current is None
+		assert ci.next is None
+
+	def test_current_and_next_beyond_end(self):
+		ci = ConsumableIter([1])
+		ci.consume()
+		assert ci.current is None
+		assert ci.next is None
 
 	def test_has_more(self):
 		ci = ConsumableIter([1, 2, 3])
@@ -234,7 +242,22 @@ class TestParser(object):
 			'foo == 1 or ',
 			'or',
 			'and',
-#			'foo == bar and (foo < 1 or foo > 2)',
 		):
 			with pytest.raises(ParseException) as e:
 				Parser().parse(s)
+
+	def test_find_group_end(self):
+		p = Parser()
+
+		for items, group_end_pos in (
+			(['foo', '==', '1', ')'], 3),
+			(['foo', '==', '1', ')', 'or', 'a', '==', '1'], 3),
+			(['foo', '==', '1', ')', 'or', '(', 'foo', '==', '1', ')'], 3),
+		):
+			assert p.find_group_end(ConsumableIter(items)) == group_end_pos
+
+		with pytest.raises(Exception):
+			assert p.find_group_end(ConsumableIter(['foo', '==', 'bar'])) == group_end_pos
+
+		with pytest.raises(Exception) as e:
+			assert p.find_group_end(ConsumableIter(['(', 'foo', '==', 'bar'])) == group_end_pos
