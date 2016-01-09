@@ -28,7 +28,7 @@ class Backend(object):
 
 		value_type = type(value)
 
-		if field_type and value_type == field_type:
+		if field_type not in str_types and field_type and value_type == field_type:
 			return value
 
 		if field_type in str_types or (field_type is None and value_type in str_types):

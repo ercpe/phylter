@@ -56,6 +56,7 @@ class TestBackends(object):
 		assert ob.get_compatible_value(None) is None
 
 		# value is already of type
+		assert ob.get_compatible_value(1, int) == 1
 		assert ob.get_compatible_value("test", str) == "test"
 
 		# str
