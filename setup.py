@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-VERSION='0.2.2'
+VERSION='0.2.3'
 
 setup(
 	name='phylter',
@@ -19,4 +19,7 @@ setup(
 	include_package_data=True,
 	zip_safe=False,
 	license='GPL-3',
+	install_requires=[
+		'pyparsing',
+	]
 )
