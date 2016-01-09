@@ -3,13 +3,13 @@
 
 from setuptools import setup, find_packages
 
-VERSION='0.2.1'
+VERSION='0.2.2'
 
 setup(
 	name='phylter',
 	version=VERSION,
 	description='Library for a filter DSL in python',
-	long_description=open('README.md').read(),
+	long_description='See `README.md <https://code.not-your-server.de/phylter.git>`_',
 	author='Johann Schmitz',
 	author_email='johann@j-schmitz.net',
 	url='https://ercpe.de/projects/phylter',
